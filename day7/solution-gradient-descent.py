@@ -2,6 +2,7 @@
 # https://adventofcode.com/2021/day/7
 
 import numpy as np
+from numpy.random.mtrand import triangular
 
 
 FILENAME = "input.txt"
@@ -10,22 +11,37 @@ with open(FILENAME) as f:
     positions = np.array([int(x) for x in f.read().strip("\n").split(",")])
 
 
+def find_min(func, derivative, x=0, lr=1, max_step=100):
+    """Find the minimum of the provided function"""
+    best_estimate, last_best_index = np.inf, 0
+
+    for i in range(max_step):
+        # update the value of the target
+        x = x - lr * derivative(x)
+
+        # recompute the minimum estimate
+        new_estimate = func(x)
+
+        if new_estimate < best_estimate:
+            last_best_index = i
+        else:
+            lr = lr * 0.1  # the estimate is not improving => update the lr
+
+        if i - last_best_index == 10 and not np.isinf(best_estimate):
+            break
+
+        best_estimate = min(best_estimate, new_estimate)
+
+    return func(round(x))
+
+
 ########################
 #        Part 1        #
 ########################
 
-# start from a random position
-x = np.random.randint(positions.min(), positions.max())
-for i in range(100):
-    # compute the derivative of the total fuel consumption wrt the current target
-    derivative = -np.sum(np.sign(positions - x))
-    lr = 0.1 ** (1 + (i // 100))
-    # update the value of the target
-    x = x - lr * derivative
-    # recompute the fuel consumption
-    fuel = np.abs(positions - round(x)).sum()
-
-assert fuel == 345197
+fuel = find_min(
+    lambda x: np.abs(positions - x).sum(), lambda x: -np.sum(np.sign(positions - x))
+)
 print("Solution to part 1:", fuel)
 
 
@@ -33,17 +49,14 @@ print("Solution to part 1:", fuel)
 #        Part 2        #
 ########################
 
-# start from a random position
-x = np.random.randint(positions.min(), positions.max())
-for i in range(200):
-    # compute the derivative of the total fuel consumption wrt the current target
-    derivative = -np.sum(((2 * np.abs(positions - x) + 1) * np.sign(positions - x)) / 2)
-    lr = 0.001 ** (1 + (i // 100))
-    # update the value of the target
-    x = round(x - lr * derivative)
-    # recompute the fuel consumption
-    fuel = np.abs(positions - x)
-    fuel = ((fuel ** 2 + fuel) // 2).sum()
-
-assert fuel == 96361606
+traingular = lambda x: (x ** 2 + x) / 2
+fuel = find_min(
+    lambda x: traingular(np.abs(positions - x)).sum(),
+    lambda x: -np.sum(((2 * np.abs(positions - x) + 1) * np.sign(positions - x)) / 2),
+    lr=0.001,
+)
 print("Solution to part 2:", fuel)
+
+
+# NOTE: sum_i [sign(positions-x)] is zero when half the points
+# lie above x and the other half below ==> x is the median of the values
