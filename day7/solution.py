@@ -32,4 +32,4 @@ for target in range(np.min(positions), np.max(positions) + 1):
     fuel = (fuel / 2) * (1 + fuel)  # Gauss formula for consecutive integers sum
     min_fuel = min(min_fuel, int(fuel.sum()))
 
-print("Solution to part 2:", min_fuel)  # 345197
+print("Solution to part 2:", min_fuel)  # 96361606
